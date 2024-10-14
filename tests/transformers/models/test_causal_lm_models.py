@@ -19,7 +19,6 @@ from QEfficient.utils.run_utils import ApiRunner
 from tests.utils import load_pytorch_model, replace_transformers_quantizers
 
 test_models = [
-    
     "CohereForAI/c4ai-command-r-v01",
 ]
 
