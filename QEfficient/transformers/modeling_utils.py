@@ -27,6 +27,13 @@ from transformers.models.gpt_bigcode.modeling_gpt_bigcode import (
     GPTBigCodeForCausalLM,
     GPTBigCodeModel,
 )
+from transformers.models.cohere.modeling_cohere import (
+    CohereRotaryEmbedding,
+    CohereAttention,
+    CohereModel,
+    CohereForCausalLM,
+    CohereDecoderLayer,
+)
 from transformers.models.gptj.modeling_gptj import GPTJAttention, GPTJForCausalLM, GPTJModel
 from transformers.models.llama.modeling_llama import (
     LlamaAttention,
@@ -73,6 +80,13 @@ from .models.falcon.modeling_falcon import (
     QEffFalconAttention,
     QEffFalconForCausalLM,
     QEffFalconModel,
+)
+from .models.cohere.modeling_cohere import (
+    QEffCohereAttention,
+    QEffCohereForCausalLM,
+    QEffCohereModel,
+    QEffCohereRotaryEmbedding,
+    QEffCohereDecoderLayer,
 )
 from .models.gpt2.modeling_gpt2 import QEffGPT2Attention, QEffGPT2Block, QEffGPT2LMHeadModel, QEffGPT2Model
 from .models.gpt_bigcode.modeling_gpt_bigcode import (
@@ -131,6 +145,7 @@ get_lists_of_cb_qeff_models = ModelArchitectures(
         MptForCausalLM.__name__,
         FalconForCausalLM.__name__,
         GPTBigCodeForCausalLM.__name__,
+        CohereForCausalLM.__name__,
     ]
 )
 # Create an instance of the named tuple
@@ -149,6 +164,7 @@ qeff_supported_architectures = ModelArchitectures(
         Qwen2ForCausalLM.__name__,
         Starcoder2ForCausalLM.__name__,
         GPTBigCodeForCausalLM.__name__,
+        CohereForCausalLM.__name__,
     ]
 )
 
@@ -180,6 +196,12 @@ TransformersToQEffModulesDict: Dict[Type[nn.Module], Type[nn.Module]] = {
     CodeGenModel: QEffCodeGenModel,
     CodeGenForCausalLM: QEffCodeGenForCausalLM,
     CodeGenBlock: QeffCodeGenBlock,
+    # Cohere
+    CohereForCausalLM: QEffCohereForCausalLM,
+    CohereAttention: QEffCohereAttention,
+    CohereModel: QEffCohereModel,
+    CohereRotaryEmbedding: QEffCohereRotaryEmbedding,
+    CohereDecoderLayer: QEffCohereDecoderLayer,
     # Mistral model layers
     MistralAttention: QEffMistralAttention,
     MistralDecoderLayer: QEffMistralDecoderLayer,
