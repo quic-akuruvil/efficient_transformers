@@ -197,7 +197,7 @@ class ApiRunner:
         session = onnxruntime.InferenceSession(model_path, session_options)
 
         generated_ids = []
-        inputs = self.input_handler.prepare_ort_inputs()
+        inputs = self.input_handler.prepare_ort_inputs()     
         ort_outputs = self.run_ort_session(inputs, session)
         ort_outputs = self.input_handler.update_ort_outputs(ort_outputs)
 
