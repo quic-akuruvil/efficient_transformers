@@ -214,8 +214,7 @@ def export_kvstyle_transformed_model_to_onnx(
         ctx_len=seq_len,
         full_batch_size=full_batch_size,
     )
-    inputs = input_handler.prepare_pytorch_inputs()
-
+    inputs = input_handler.prepare_pytorch_inputs()   
     pt_outputs = transformed_model(**inputs)
     output_names = list(pt_outputs.keys())
 
@@ -265,7 +264,7 @@ def export_kvstyle_transformed_model_to_onnx(
     for i, (key, value) in enumerate(pkv):
         inputs[f"past_key.{i}"] = key
         inputs[f"past_value.{i}"] = value
-
+        
     # Run onnxrt inference
     input_names, ort_outputs = run_model_on_ort(
         onnx_path=os.path.join(onnx_dir_path, f"{model_name}.onnx"),

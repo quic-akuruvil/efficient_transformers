@@ -77,7 +77,7 @@ def main(
     qpc_dir_path = get_qpc_dir_path(
         model_name, num_cores, mos, batch_size, prompt_len, ctx_len, mxfp6, mxint8, device_group, full_batch_size
     )
-
+    
     # Handle qpc generation
     if qpc_exists(qpc_dir_path):
         logger.info(f"Pre-compiled qpc found at {qpc_dir_path}! Executing with given prompt")
