@@ -57,13 +57,6 @@ from transformers.models.llama.modeling_llama import (
     LlamaModel,
     LlamaRMSNorm,
 )
-from transformers.models.cohere.modeling_cohere import (
-    CohereRotaryEmbedding,
-    CohereAttention,
-    CohereModel,
-    CohereForCausalLM,
-    CohereDecoderLayer,
-)
 from transformers.models.mistral.modeling_mistral import (
     MistralAttention,
     MistralDecoderLayer,
@@ -159,13 +152,6 @@ from QEfficient.transformers.models.llama.modeling_llama import (
     QEffLlamaDecoderLayer,
     QEffLlamaForCausalLM,
     QEffLlamaModel,
-)
-from QEfficient.transformers.models.cohere.modeling_cohere import (
-    QEffCohereAttention,
-    QEffCohereForCausalLM,
-    QEffCohereModel,
-    QEffCohereRotaryEmbedding,
-    QEffCohereDecoderLayer,
 )
 from QEfficient.transformers.models.mistral.modeling_mistral import (
     QEffMistralAttention,
