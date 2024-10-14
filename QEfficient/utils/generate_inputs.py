@@ -54,6 +54,7 @@ class InputHandler:
             padding=True,
         )
         input_ids = inputs["input_ids"]
+        
         batch_size, input_len = input_ids.shape
         inputs.pop("attention_mask")
         inputs.pop("token_type_ids", None)

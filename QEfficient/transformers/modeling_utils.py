@@ -48,6 +48,13 @@ from transformers.models.gpt_bigcode.modeling_gpt_bigcode import (
     GPTBigCodeForCausalLM,
     GPTBigCodeModel,
 )
+from transformers.models.cohere.modeling_cohere import (
+    CohereRotaryEmbedding,
+    CohereAttention,
+    CohereModel,
+    CohereForCausalLM,
+    CohereDecoderLayer,
+)
 from transformers.models.gptj.modeling_gptj import GPTJAttention, GPTJForCausalLM, GPTJModel
 from transformers.models.llama.modeling_llama import (
     LlamaAttention,
