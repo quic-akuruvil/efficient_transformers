@@ -253,6 +253,14 @@ class KVCacheTransform(ModuleMappingTransform):
         CohereModel: QEffCohereModel,
         CohereRotaryEmbedding: QEffCohereRotaryEmbedding,
         CohereDecoderLayer: QEffCohereDecoderLayer,
+        # Gemma
+        GemmaAttention: QEffGemmaAttention,
+        GemmaModel: QEffGemmaModel,
+        GemmaForCausalLM: QEffGemmaForCausalLM,
+        # Gemma2
+        Gemma2Attention: QEffGemma2Attention,
+        Gemma2Model: QEffGemma2Model,
+        Gemma2ForCausalLM: QEffGemma2ForCausalLM,
         # Mistral
         MistralAttention: QEffMistralAttention,
         MistralDecoderLayer: QEffMistralDecoderLayer,

@@ -40,6 +40,23 @@ test_models = [
     "ibm-granite/granite-20b-code-base",
     
     "CohereForAI/c4ai-command-r-v01",
+    "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
+    "gpt2",
+    "Salesforce/codegen-350M-mono",
+    "microsoft/phi-2",
+    "microsoft/Phi-3-mini-4k-instruct",
+    "tiiuae/falcon-7b",
+    "Qwen/Qwen2-0.5B",
+    "bigcode/starcoder2-3b",
+    "Felladrin/Minueza-32M-Base",
+    "wtang06/mpt-125m-c4",
+    "hakurei/gpt-j-random-tinier",
+    "mistralai/Mixtral-8x7B-Instruct-v0.1",
+    "unsloth/gemma-2b",
+    "unsloth/gemma-2-2b",
+    "TheBloke/TinyLlama-1.1B-Chat-v0.3-AWQ",  # AWQ model
+    "TheBloke/Llama-2-7B-GPTQ",  # GPTQ model
+    "ibm-granite/granite-20b-code-base",
 ]
 
 
