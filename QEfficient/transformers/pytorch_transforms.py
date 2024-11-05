@@ -255,10 +255,12 @@ class KVCacheTransform(ModuleMappingTransform):
         CohereDecoderLayer: QEffCohereDecoderLayer,
         # Gemma
         GemmaAttention: QEffGemmaAttention,
+        GemmaDecoderLayer: QEffGemmaDecoderLayer,
         GemmaModel: QEffGemmaModel,
         GemmaForCausalLM: QEffGemmaForCausalLM,
         # Gemma2
         Gemma2Attention: QEffGemma2Attention,
+        Gemma2DecoderLayer: QEffGemma2DecoderLayer,
         Gemma2Model: QEffGemma2Model,
         Gemma2ForCausalLM: QEffGemma2ForCausalLM,
         # Mistral
