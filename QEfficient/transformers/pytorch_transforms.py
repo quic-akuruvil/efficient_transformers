@@ -267,38 +267,7 @@ class KVCacheTransform(ModuleMappingTransform):
         CohereModel: QEffCohereModel,
         CohereRotaryEmbedding: QEffCohereRotaryEmbedding,
         CohereDecoderLayer: QEffCohereDecoderLayer,
-        # Gemma
-        GemmaAttention: QEffGemmaAttention,
-        GemmaDecoderLayer: QEffGemmaDecoderLayer,
-        GemmaModel: QEffGemmaModel,
-        GemmaForCausalLM: QEffGemmaForCausalLM,
-        # Gemma2
-        Gemma2Attention: QEffGemma2Attention,
-        Gemma2DecoderLayer: QEffGemma2DecoderLayer,
-        Gemma2Model: QEffGemma2Model,
-        Gemma2ForCausalLM: QEffGemma2ForCausalLM,
-        # Cohere
-        CohereForCausalLM: QEffCohereForCausalLM,
-        CohereAttention: QEffCohereAttention,
-        CohereModel: QEffCohereModel,
-        CohereRotaryEmbedding: QEffCohereRotaryEmbedding,
-        CohereDecoderLayer: QEffCohereDecoderLayer,
-        # Gemma
-        GemmaAttention: QEffGemmaAttention,
-        GemmaDecoderLayer: QEffGemmaDecoderLayer,
-        GemmaModel: QEffGemmaModel,
-        GemmaForCausalLM: QEffGemmaForCausalLM,
-        # Gemma2
-        Gemma2Attention: QEffGemma2Attention,
-        Gemma2DecoderLayer: QEffGemma2DecoderLayer,
-        Gemma2Model: QEffGemma2Model,
-        Gemma2ForCausalLM: QEffGemma2ForCausalLM,
-        # Cohere
-        CohereForCausalLM: QEffCohereForCausalLM,
-        CohereAttention: QEffCohereAttention,
-        CohereModel: QEffCohereModel,
-        CohereRotaryEmbedding: QEffCohereRotaryEmbedding,
-        CohereDecoderLayer: QEffCohereDecoderLayer,
+       
         # Mistral
         MistralAttention: QEffMistralAttention,
         MistralDecoderLayer: QEffMistralDecoderLayer,
