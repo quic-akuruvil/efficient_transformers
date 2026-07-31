@@ -1701,8 +1701,8 @@ class _QEffAutoModelForImageTextToTextDualQPC:
             and getattr(self.lang_model.hash_params["blocking_kwargs"], "batch_fold", False)
         )
 
-        export_seq_len = min(prefill_seq_len, constants.ONNX_EXPORT_EXAMPLE_SEQ_LEN)
-        
+        export_seq_len = min(prefill_seq_len, constants.ONNX_EXPORT_EXAMPLE_SEQ_LEN) if prefill_seq_len else None
+
         # TODO This is a temporary change as continous batching is enabled only for few models. Once support is added for all the models this exception handing can be removed.
         try:
             inputs = self.model.get_dummy_inputs(
