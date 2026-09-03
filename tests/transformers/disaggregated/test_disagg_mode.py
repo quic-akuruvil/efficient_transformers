@@ -73,7 +73,6 @@ def _make_dummy_model(model_id: str) -> AutoModelForCausalLM:
     return model
 
 
-@pytest.mark.skip
 @pytest.mark.on_qaic
 @pytest.mark.llm_model
 @pytest.mark.parametrize("model_id", model_id_blocking)
@@ -243,7 +242,6 @@ def test_disagg_mode_prefill_chunked(model_id, prompt):
     assert (torch.from_numpy(qpc_out["logits"]) - qeff_out.logits).abs().max() < 5e-2
 
 
-@pytest.mark.skip
 @pytest.mark.on_qaic
 @pytest.mark.llm_model
 @pytest.mark.parametrize("model_id", model_id_blocking)
@@ -354,7 +352,6 @@ def test_disagg_mode_prefill_only_and_decode_only(model_id, prompt):
         aic_enable_depth_first=True,
         num_speculative_tokens=None,
         prefill_only=True,
-        offload_pt_weights=False,
     )
 
     prefill_session = QAICInferenceSession(prefill_qpc_path)
@@ -469,8 +466,8 @@ def test_disagg_mode_prefix_caching(model_id, prompt):
         retain_full_kv=True,
     )
 
-    out1, ids1 = prefix_caching_inference(model_id, prefill_qpc_path, decode_qpc_path, prompt, decode_batch_id=0)
-    out2, ids2 = prefix_caching_inference(model_id, prefill_qpc_path, decode_qpc_path, prompt, decode_batch_id=1)
+    out1, _ids1 = prefix_caching_inference(model_id, prefill_qpc_path, decode_qpc_path, prompt, decode_batch_id=0)
+    out2, _ids2 = prefix_caching_inference(model_id, prefill_qpc_path, decode_qpc_path, prompt, decode_batch_id=1)
 
     for i in range(config.num_hidden_layers):
         assert (

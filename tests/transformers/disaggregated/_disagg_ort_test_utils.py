@@ -5,10 +5,61 @@
 #
 # ----------------------------------------------------------------------------
 """Shared helpers for disaggregated HF/ORT/QAIC parity tests."""
-
+import os
+from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
+
+
+@dataclass(frozen=True)
+class NightlyDisaggTestConfig:
+    model_name: str
+    prefill_num_devices: int
+    decode_num_devices: int
+    stages: int
+    vision_num_devices: int | None = None
+    image_size: tuple[int, int] | None = None
+    image_url: str | None = None
+    image_file_env: str | None = None
+
+
+def optional_int_env(name: str, default: int | None) -> int | None:
+    raw = os.environ.get(name)
+    if raw is None or raw.strip() == "":
+        return default
+    return int(raw)
+
+
+def nightly_disagg_test_config(
+    *,
+    model_env: str,
+    default_model_name: str,
+    compile_env_prefix: str,
+    default_prefill_num_devices: int = 8,
+    default_decode_num_devices: int = 4,
+    default_stages: int = 4,
+    default_vision_num_devices: int | None = 4,
+    default_image_size: tuple[int, int] | None = None,
+    default_image_url: str | None = None,
+    image_file_env: str | None = None,
+) -> NightlyDisaggTestConfig:
+    return NightlyDisaggTestConfig(
+        model_name=os.environ.get(model_env, default_model_name),
+        vision_num_devices=optional_int_env(
+            f"{compile_env_prefix}_NIGHTLY_FULL_MODEL_VISION_NUM_DEVICES", default_vision_num_devices
+        ),
+        prefill_num_devices=optional_int_env(
+            f"{compile_env_prefix}_NIGHTLY_FULL_MODEL_PREFILL_NUM_DEVICES", default_prefill_num_devices
+        ),
+        decode_num_devices=optional_int_env(
+            f"{compile_env_prefix}_NIGHTLY_FULL_MODEL_DECODE_NUM_DEVICES", default_decode_num_devices
+        ),
+        stages=optional_int_env(f"{compile_env_prefix}_NIGHTLY_FULL_MODEL_STAGES", default_stages),
+        image_size=default_image_size,
+        image_url=default_image_url,
+        image_file_env=image_file_env,
+    )
 
 
 def assert_onnx_path(onnx_path, label: str) -> Path:

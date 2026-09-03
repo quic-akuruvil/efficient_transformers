@@ -6,8 +6,12 @@
 # -----------------------------------------------------------------------------
 
 """parity: KV-DMA-share disagg path vs HF generate.
-pytest -m 'on_qaic and disagg_dma'   tests/transformers/disaggregated/test_qwen3moe_kv_share_parity.py
+python -m pytest     tests/transformers/disaggregated/test_qwen3moe_kv_share_parity.py     -k test_kv_share_matches_hf_generate_leading_tokens     -m on_qaic -s
 
+Self-contained: compiles and runs the disaggregated prefill/decode DMA-share
+sessions directly (see examples/disagg_serving/qwen3moe_disagg_mode_cb_chunking_with_kv_share.py
+for the reference continuous-batching version this is adapted from), rather than
+importing a `run(...)` helper from an examples script.
 """
 
 import os
@@ -20,7 +24,6 @@ from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer
 
 from QEfficient import QEFFAutoModelForCausalLM
 from QEfficient.generation.cloud_infer import QAICInferenceSession
-from tests.transformers.disaggregated._disagg_dma_config import disagg_dma_config
 
 MODEL_ID = "yujiepan/qwen3-moe-tiny-random"
 # MODEL_ID = "Qwen/Qwen3-30B-A3B"
@@ -37,8 +40,8 @@ NUM_CORES = 4
 MOE_PREFILL_PACKED_CHUNK_SIZE = 128
 
 HF_COMPARE_TOKENS = int(os.environ.get("QEFF_QWEN3MOE_HF_COMPARE_TOKENS", NUM_TOKEN_MATCH))
-HF_MIN_LEADING_MATCH = int(os.environ.get("QEFF_QWEN3MOE_HF_MIN_MATCH", 20))
-NUM_HIDDEN_LAYERS = int(os.environ.get("QEFF_QWEN3MOE_NUM_HIDDEN_LAYERS", 4))
+HF_MIN_LEADING_MATCH = int(os.environ.get("QEFF_QWEN3MOE_HF_MIN_MATCH", "20"))
+NUM_HIDDEN_LAYERS = int(os.environ.get("QEFF_QWEN3MOE_NUM_HIDDEN_LAYERS", "4"))
 
 
 def _assert_onnx_path(onnx_path, label: str) -> Path:
@@ -79,21 +82,14 @@ def _run_hf_greedy_reference(compare_tokens: int) -> list:
     return sequences[0, prompt_len:].tolist()
 
 
-def _compile_sessions(
-    qeff_model,
-    onnx_paths: dict,
-    *,
-    prefill_num_devices: int = PREFILL_NUM_DEVICES,
-    decode_num_devices: int = DECODE_NUM_DEVICES,
-    stages: int = STAGES,
-) -> tuple[QAICInferenceSession, QAICInferenceSession]:
+def _compile_sessions(qeff_model, onnx_paths: dict) -> tuple[QAICInferenceSession, QAICInferenceSession]:
     """Compile the DMA KV-share prefill/decode QPCs (split_retained_state_io + retain_full_kv)."""
     decode_qpc_path = qeff_model.compile(
         prefill_seq_len=1,
         ctx_len=CTX_LEN,
         full_batch_size=FULL_BATCH_SIZE,
         num_cores=NUM_CORES,
-        num_devices=decode_num_devices,
+        num_devices=DECODE_NUM_DEVICES,
         mos=1,
         aic_enable_depth_first=True,
         num_speculative_tokens=None,
@@ -109,9 +105,9 @@ def _compile_sessions(
         ctx_len=CTX_LEN,
         full_batch_size=FULL_BATCH_SIZE,
         num_cores=NUM_CORES,
-        qaic_config={"moe_config": {"expert_parallel_chunk_size": MOE_PREFILL_PACKED_CHUNK_SIZE}},
-        num_devices=prefill_num_devices,
-        mdp_num_partitions=stages,
+        moe_prefill_packed_chunk_size=MOE_PREFILL_PACKED_CHUNK_SIZE,
+        num_devices=PREFILL_NUM_DEVICES,
+        mdp_num_partitions=STAGES,
         split_retained_state_io=True,
         retain_full_kv=True,
         mos=1,
@@ -290,26 +286,17 @@ def test_qwen3moe_kv_share_kv_handoff_correctness(manual_cleanup):
 def test_kv_share_matches_hf_generate_leading_tokens(manual_cleanup):
     compare_tokens = HF_COMPARE_TOKENS
 
-    dma_config = disagg_dma_config("qwen3moe_tiny")
-    model_id = dma_config["model_id"]
-
     hf_tokens = _run_hf_greedy_reference(compare_tokens)
 
-    tokenizer = AutoTokenizer.from_pretrained(model_id)
+    tokenizer = AutoTokenizer.from_pretrained(MODEL_ID)
     config = _build_config(NUM_HIDDEN_LAYERS)
     from_pretrained_kwargs = {"config": config} if config is not None else {}
-    qeff_model = QEFFAutoModelForCausalLM.from_pretrained(model_id, continuous_batching=True, **from_pretrained_kwargs)
+    qeff_model = QEFFAutoModelForCausalLM.from_pretrained(MODEL_ID, continuous_batching=True, **from_pretrained_kwargs)
 
     sessions = []
     compiled_onnx_paths = {}
     try:
-        prefill_session, decode_session = _compile_sessions(
-            qeff_model,
-            compiled_onnx_paths,
-            prefill_num_devices=dma_config["prefill_num_devices"],
-            decode_num_devices=dma_config["decode_num_devices"],
-            stages=dma_config["stages"],
-        )
+        prefill_session, decode_session = _compile_sessions(qeff_model, compiled_onnx_paths)
         sessions.extend([prefill_session, decode_session])
         print(f"Disagg ONNX paths: {compiled_onnx_paths}")
 

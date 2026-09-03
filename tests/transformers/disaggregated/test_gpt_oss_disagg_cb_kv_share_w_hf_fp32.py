@@ -20,7 +20,8 @@ pytest -m "on_qaic and disagg_dma" tests/transformers/disaggregated/test_gpt_oss
 
 Run the nightly full-model HF/ORT/QAIC three-way parity test with:
     pytest -m "nightly_disagg" \
-        tests/transformers/disaggregated/test_gpt_oss_disagg_cb_kv_share_w_hf_fp32.py
+        tests/transformers/disaggregated/test_gpt_oss_disagg_cb_kv_share_w_hf_fp32.py \
+        -k test_gpt_oss_disagg_kv_share_qaic_vs_ort_vs_hf_fp32
 """
 
 from pathlib import Path
@@ -32,7 +33,6 @@ from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer
 
 from QEfficient import QEFFAutoModelForCausalLM
 from QEfficient.generation.cloud_infer import QAICInferenceSession
-from tests.transformers.disaggregated._disagg_dma_config import disagg_dma_configs
 from tests.transformers.disaggregated._disagg_ort_test_utils import (
     assert_three_way_tokens_match as _assert_three_way_tokens_match,
 )
@@ -49,11 +49,21 @@ from tests.transformers.disaggregated._disagg_ort_test_utils import (
     session_output_names as _session_output_names,
 )
 from tests.transformers.disaggregated._disagg_ort_test_utils import (
+    nightly_disagg_test_config as _nightly_disagg_test_config,
+)
+from tests.transformers.disaggregated._disagg_ort_test_utils import (
     update_state_from_outputs as _update_state_from_outputs,
 )
-from tests.transformers.disaggregated._nightly_disagg_config import nightly_disagg_configs
 
 MODEL_NAME = "openai/gpt-oss-20b"
+NIGHTLY_TEST_CONFIG = _nightly_disagg_test_config(
+    model_env="QEFF_GPT_OSS_THREE_WAY_MODEL_NAME",
+    default_model_name="openai/gpt-oss-20b",
+    compile_env_prefix="QEFF_GPT_OSS_CB",
+    default_vision_num_devices=None,
+)
+THREE_WAY_PARITY_MODEL_NAME = NIGHTLY_TEST_CONFIG.model_name
+TOKENIZER_ID = MODEL_NAME
 NUM_HIDDEN_LAYERS = 4
 PREFILL_SEQ_LEN = 32
 CTX_LEN = 256
@@ -67,6 +77,9 @@ TEXT_PROMPTS = [
 
 NUM_CORES = 16
 MOE_PREFILL_PACKED_CHUNK_SIZE = 16
+STAGES = 2
+PREFILL_NUM_DEVICES = 2
+DECODE_NUM_DEVICES = 1
 
 
 def _assert_onnx_path(onnx_path, label: str) -> Path:
@@ -531,7 +544,7 @@ def _compile_disagg_qpcs(
         prefill_seq_len=PREFILL_SEQ_LEN,
         ctx_len=CTX_LEN,
         num_cores=NUM_CORES,
-        qaic_config={"moe_config": {"expert_parallel_chunk_size": MOE_PREFILL_PACKED_CHUNK_SIZE}},
+        moe_prefill_packed_chunk_size=MOE_PREFILL_PACKED_CHUNK_SIZE,
         num_devices=prefill_num_devices,
         mdp_num_partitions=stages,
         split_retained_state_io=True,
@@ -554,18 +567,16 @@ def _compile_disagg_qpcs(
     return prefill_session, decode_session
 
 
-@pytest.mark.skip()
-@pytest.mark.parametrize("nightly_config", nightly_disagg_configs("gpt_oss"))
-def test_gpt_oss_disagg_kv_share_qaic_vs_ort_vs_hf_fp32(manual_cleanup, nightly_config):
+@pytest.mark.nightly_disagg
+def test_gpt_oss_disagg_kv_share_qaic_vs_ort_vs_hf_fp32(manual_cleanup):
     """Non-CB three-way parity: HF fp32 == ORT on QPC ONNX == QAIC disagg DMA."""
     pytest.importorskip("onnxruntime")
     pytest.importorskip("onnx")
     torch.manual_seed(42)
 
-    model_id = nightly_config["model_id"]
-    config = _build_config(dtype="float32", full_model=True, model_name=model_id)
-    hf_model = _load_hf_model(config, model_name=model_id)
-    tokenizer = AutoTokenizer.from_pretrained(model_id)
+    config = _build_config(dtype="float32", full_model=True, model_name=THREE_WAY_PARITY_MODEL_NAME)
+    hf_model = _load_hf_model(config, model_name=THREE_WAY_PARITY_MODEL_NAME)
+    tokenizer = AutoTokenizer.from_pretrained(THREE_WAY_PARITY_MODEL_NAME)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
 
@@ -579,9 +590,9 @@ def test_gpt_oss_disagg_kv_share_qaic_vs_ort_vs_hf_fp32(manual_cleanup, nightly_
             qeff_model,
             sessions,
             compiled_onnx_paths,
-            prefill_num_devices=nightly_config["prefill_num_devices"],
-            decode_num_devices=nightly_config["decode_num_devices"],
-            stages=nightly_config["stages"],
+            prefill_num_devices=NIGHTLY_TEST_CONFIG.prefill_num_devices,
+            decode_num_devices=NIGHTLY_TEST_CONFIG.decode_num_devices,
+            stages=NIGHTLY_TEST_CONFIG.stages,
         )
         ort_tokens = _run_ort_generation(compiled_onnx_paths, tokenizer)
         qaic_tokens = _run_disagg_kv_share_qaic_generation(tokenizer, prefill_session, decode_session)
@@ -606,16 +617,12 @@ def test_gpt_oss_disagg_kv_share_qaic_vs_ort_vs_hf_fp32(manual_cleanup, nightly_
 
 @pytest.mark.on_qaic
 @pytest.mark.disagg_dma
-@pytest.mark.parametrize("dma_config", disagg_dma_configs("gpt_oss_reduced"))
-def test_gpt_oss_disagg_cb_kv_handoff_and_hf_parity(manual_cleanup, dma_config):
+def test_gpt_oss_disagg_cb_kv_handoff_and_hf_parity(manual_cleanup):
     torch.manual_seed(42)
 
-    model_id = dma_config["model_id"]
-    use_onnx_subfunctions = dma_config.get("use_onnx_subfunctions", True)
-
-    config = _build_config(dtype="float32", model_name=model_id)
-    hf_model = _load_hf_model(config, model_name=model_id)
-    tokenizer = AutoTokenizer.from_pretrained(model_id)
+    config = _build_config(dtype="float32")
+    hf_model = _load_hf_model(config)
+    tokenizer = AutoTokenizer.from_pretrained(TOKENIZER_ID)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
 
@@ -631,7 +638,7 @@ def test_gpt_oss_disagg_cb_kv_handoff_and_hf_parity(manual_cleanup, dma_config):
             ctx_len=CTX_LEN,
             full_batch_size=FULL_BATCH_SIZE,
             num_cores=NUM_CORES,
-            num_devices=dma_config["decode_num_devices"],
+            num_devices=DECODE_NUM_DEVICES,
             mos=1,
             mxfp6_matmul=False,
             mxint8_kv_cache=False,
@@ -640,7 +647,7 @@ def test_gpt_oss_disagg_cb_kv_handoff_and_hf_parity(manual_cleanup, dma_config):
             offload_pt_weights=False,
             split_retained_state_io=True,
             retain_full_kv=True,
-            use_onnx_subfunctions=use_onnx_subfunctions,
+            use_onnx_subfunctions=True,
         )
         compiled_onnx_paths["decode"] = _assert_onnx_path(qeff_model.onnx_path, "decode")
 
@@ -649,9 +656,9 @@ def test_gpt_oss_disagg_cb_kv_handoff_and_hf_parity(manual_cleanup, dma_config):
             ctx_len=CTX_LEN,
             full_batch_size=FULL_BATCH_SIZE,
             num_cores=NUM_CORES,
-            qaic_config={"moe_config": {"expert_parallel_chunk_size": MOE_PREFILL_PACKED_CHUNK_SIZE}},
-            num_devices=dma_config["prefill_num_devices"],
-            mdp_num_partitions=dma_config["stages"],
+            moe_prefill_packed_chunk_size=MOE_PREFILL_PACKED_CHUNK_SIZE,
+            num_devices=PREFILL_NUM_DEVICES,
+            mdp_num_partitions=STAGES,
             split_retained_state_io=True,
             mos=1,
             mxfp6_matmul=False,
@@ -661,7 +668,7 @@ def test_gpt_oss_disagg_cb_kv_handoff_and_hf_parity(manual_cleanup, dma_config):
             prefill_only=True,
             enable_chunking=True,
             retain_full_kv=True,
-            use_onnx_subfunctions=use_onnx_subfunctions,
+            use_onnx_subfunctions=True,
         )
         compiled_onnx_paths["prefill"] = _assert_onnx_path(qeff_model.onnx_path, "prefill")
         print(f"Disagg CB ONNX paths: {compiled_onnx_paths}")
