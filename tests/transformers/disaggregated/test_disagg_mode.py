@@ -469,8 +469,8 @@ def test_disagg_mode_prefix_caching(model_id, prompt):
         retain_full_kv=True,
     )
 
-    out1, ids1 = prefix_caching_inference(model_id, prefill_qpc_path, decode_qpc_path, prompt, decode_batch_id=0)
-    out2, ids2 = prefix_caching_inference(model_id, prefill_qpc_path, decode_qpc_path, prompt, decode_batch_id=1)
+    out1, _ids1 = prefix_caching_inference(model_id, prefill_qpc_path, decode_qpc_path, prompt, decode_batch_id=0)
+    out2, _ids2 = prefix_caching_inference(model_id, prefill_qpc_path, decode_qpc_path, prompt, decode_batch_id=1)
 
     for i in range(config.num_hidden_layers):
         assert (
