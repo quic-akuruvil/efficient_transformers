@@ -377,7 +377,7 @@ def test_weight_free_blocked_hw_hf_parity_and_artifact_metrics(
     assert_blocked_kv_ops_for_mode(onnx_path, qeff_model, blocking_key)
 
     compile_start = time.perf_counter()
-    compile_options, device_ids = _blocking_runtime_options(blocking_key)
+    compile_options, _ = _blocking_runtime_options(blocking_key)
     qpc_path = Path(
         qeff_model.compile(
             onnx_path=str(onnx_path),
@@ -413,7 +413,6 @@ def test_weight_free_blocked_hw_hf_parity_and_artifact_metrics(
     qaic_output = qeff_model.generate(
         tokenizer=tokenizer,
         prompts=prompts,
-        device_ids=device_ids,
     )
     assert qaic_output is not None, "Blocked weight-free QAIC generate returned None"
     assert hasattr(qaic_output, "generated_ids") and qaic_output.generated_ids is not None
